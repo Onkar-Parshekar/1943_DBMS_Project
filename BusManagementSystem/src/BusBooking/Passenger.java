@@ -333,6 +333,27 @@ public class Passenger extends JFrame implements ActionListener, MouseListener{
 		}
 	}
 	
+	public String getPassengerId(String fname, String lname, String ddate, int seat) {
+		String pId="";
+		try {
+			pst2 = con.prepareStatement("Select custNo from passenger where firstName = '" +fname+"' and lastName = '" +lname+"' and date = '" +ddate+"' and seatNo = '" +seat+"'");
+			rs = pst2.executeQuery();
+			ResultSetMetaData rsd = rs.getMetaData();
+			int c;
+			c = rsd.getColumnCount();
+			while(rs.next()) {
+				for(int i=1; i<=c; i++) {
+					pId = rs.getString("custNo");
+				}
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return pId;
+	}
+	
 	public void getDestination() {
 		String destLoc;
 		try {
@@ -362,7 +383,7 @@ public class Passenger extends JFrame implements ActionListener, MouseListener{
 		try {
 			pst = con.prepareStatement("Select schedule.busNo,schedule.seats,passenger.firstName,passenger.custGender,"
 					+ "schedule.departureDate,schedule.arrival,schedule.departure,schedule.arrivalDate,schedule.seats,schedule.status,schedule.price from schedule Left JOIN "
-					+ "passenger ON schedule.busNo = passenger.busNo AND schedule.seats = passenger.seatNo AND schedule.departureDate = passenger.date  where "
+					+ "passenger ON schedule.pid = passenger.custNo AND schedule.seats = passenger.seatNo AND schedule.departureDate = passenger.date  where "
 					+ "departureDate = ? and source = ? and destination = ?");
 			pst.setString(1, date);
 			pst.setString(2, source);
@@ -423,11 +444,15 @@ public class Passenger extends JFrame implements ActionListener, MouseListener{
 				pst3.setInt(9, tickPrice);
 				pst3.executeUpdate();
 				
-				pst = con.prepareStatement("update schedule set status = ? where seats = ? and departureDate = ? and busNo = ?");
+				int seatNom = Integer.parseInt(getseatnumber);
+				String pass = getPassengerId(fname,lname,getdepartureDate,seatNom);
+				int pid = Integer.parseInt(pass);
+				pst = con.prepareStatement("update schedule set status = ?, pid = ? where seats = ? and departureDate = ? and busNo = ?");
 				pst.setString(1, "Booked");
-				pst.setString(2, getseatnumber);
-				pst.setString(3, getdepartureDate);
-				pst.setString(4, getbusnumber);
+				pst.setInt(2, pid);
+				pst.setString(3, getseatnumber);
+				pst.setString(4, getdepartureDate);
+				pst.setString(5, getbusnumber);
 				pst.executeUpdate();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
